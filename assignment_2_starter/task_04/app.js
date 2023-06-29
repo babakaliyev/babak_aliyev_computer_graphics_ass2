@@ -4,7 +4,10 @@ let modelViewMatrix, projectionMatrix;
 let eye = [0, 0, 0.1];
 let at = [0, 0, 0];
 let up = [0, 1, 0];
-let left = -1, right = 1, bottom = -1, ytop = 1, near = -10, far = 10;
+let fovy = 60; // Field of view in degrees
+let aspect = 1; // Aspect ratio of the canvas
+let near = 0.1; // Near clipping plane
+let far = 10.0; // Far clipping plane
 
 onload = () => {
   let canvas = document.getElementById("webgl-canvas");
@@ -61,6 +64,32 @@ onload = () => {
     1, 1, 1,
   ];
 
+  vertices = scale(0.5, vertices);
+
+  generateCube(vertices, indices, colors);
+
+  let vertices2 = [
+    3, -1, -1,
+    3, 1, -1,
+    5, 1, -1,
+    5, -1, -1,
+    3, -1, -3,
+    3, 1, -3,
+    5, 1, -3,
+    5, -1, -3,
+  ];
+
+  generateCube(vertices2, indices, colors);
+
+  modelViewMatrix = gl.getUniformLocation(program, 'modelViewMatrix');
+  projectionMatrix = gl.getUniformLocation(program, 'projectionMatrix');
+
+  document.addEventListener('keydown', handleKeyDown);
+
+  render();
+};
+
+function generateCube(vertices, indices, colors) {
   let vBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -80,14 +109,7 @@ onload = () => {
   let vColor = gl.getAttribLocation(program, 'vColor');
   gl.vertexAttribPointer(vColor, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(vColor);
-
-  modelViewMatrix = gl.getUniformLocation(program, 'modelViewMatrix');
-  projectionMatrix = gl.getUniformLocation(program, 'projectionMatrix');
-
-  document.addEventListener('keydown', handleKeyDown);
-
-  render();
-};
+}
 //  these keyboard events will trigger the camera
 function handleKeyDown(event) {
   switch (event.key) {
@@ -106,30 +128,35 @@ function handleKeyDown(event) {
     case 'F':
       eye = [0, 0, 0.1]; 
       break;
-      // clockwise by 10 degrees
+      // rotating clockwise by 10 degrees
     case 'd':
     case 'D':
       rotateCamera(10); 
       break;
-      // counter-clockwise by 30 degrees
+      // rotating counter-clockwise by -10 degrees
     case 'a':
     case 'A':
       rotateCamera(-10); 
       break;
-      // isometric view
-    case 'i':
-    case 'I':
-      eye = [1, 1, 1]; 
-      break;
       // zoom in
     case 'w':
     case 'W':
-      zoomIn(); 
+      zoomIn();
       break;
       // zoom out
     case 's':
     case 'S':
-      zoomOut(); 
+      zoomOut();
+      break;
+      // orthographic view
+    case 'o':
+    case 'O':
+      setOrthographicView();
+      break;
+      // perspective view
+    case 'p':
+    case 'P':
+      setPerspectiveView();
       break;
   }
 
@@ -154,36 +181,40 @@ function rotateCamera(theta) {
     rotationMatrix[2][0] * up[0] + rotationMatrix[2][1] * up[1] + rotationMatrix[2][2] * up[2]
   );
 }
-// fitting the viewing frustum to zoom in
+
 function zoomIn() {
-  left += 0.1;
-  right -= 0.1;
-  bottom += 0.1;
-  ytop -= 0.1;
+  fovy -= 5; // Decrease the field of view
+  if (fovy < 1) fovy = 1; // Limit the minimum field of view
 }
-// fitting the viewing frustum to zoom out
+
 function zoomOut() {
-  left -= 0.1;
-  right += 0.1;
-  bottom -= 0.1;
-  ytop += 0.1;
+  fovy += 5; // Increase the field of view
+  if (fovy > 179) fovy = 179; // Limit the maximum field of view
 }
+function setOrthographicView() {
+    let canvas = document.getElementById("webgl-canvas");
+    aspect = canvas.width / canvas.height;
+    projectionMatrix = ortho(-2 * aspect, 2 * aspect, -2, 2, -10, 10);
+    gl.uniformMatrix4fv(projectionMatrix, false, flatten(projectionMatrix));
+  }
+  
+  function setPerspectiveView() {
+    let canvas = document.getElementById("webgl-canvas");
+    aspect = canvas.width / canvas.height;
+    projectionMatrix = perspective(fovy, aspect, near, far);
+    gl.uniformMatrix4fv(projectionMatrix, false, flatten(projectionMatrix));
+  }
+  
 
 function render() {
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-  let mvm = lookAt(eye, at, up);
-  let proj = ortho(left, right, bottom, ytop, near, far);
-
-  gl.uniformMatrix4fv(modelViewMatrix, false, flatten(mvm));
-  gl.uniformMatrix4fv(projectionMatrix, false, flatten(proj));
-
-  gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_BYTE, 0);
-}
-
-function handleKeyPress(event) {
-  // it just handling key presses if the canvas has focus
-  if (document.activeElement.tagName === 'CANVAS') {
-    handleKeyDown(event);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  
+    let mvm = lookAt(eye, at, up);
+    gl.uniformMatrix4fv(modelViewMatrix, false, flatten(mvm));
+  
+    let proj = perspective(fovy, aspect, near, far);
+    gl.uniformMatrix4fv(projectionMatrix, false, flatten(proj));
+  
+    gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_BYTE, 0);
   }
-}
+  
