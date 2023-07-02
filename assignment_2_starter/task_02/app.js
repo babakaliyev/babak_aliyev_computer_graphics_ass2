@@ -4,7 +4,7 @@ let modelViewMatrix, projectionMatrix;
 let eye = [0, 0, 0.1];
 let at = [0, 0, 0];
 let up = [0, 1, 0];
-let left = -1, right = 1, bottom = -1, ytop = 1, near = -10, far = 10;
+let left = -2, right = 2, bottom = -2, ytop = 2, near = -10, far = 10;
 
 onload = () => {
   let canvas = document.getElementById("webgl-canvas");
