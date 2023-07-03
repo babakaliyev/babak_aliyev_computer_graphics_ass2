@@ -95,27 +95,30 @@ function handleKeyDown(event) {
         // Top-side view
         case 't':
         case 'T':
-            eye = [0, 1, 0.1]; 
+            eye = [0, 1, 0]; 
+            up = [0,0,1];
             break;
             // Left-side view
         case 'l':
         case 'L':
-            eye = [-1, 0, 0.1]; 
+            eye = [-1, 0, 0]; 
+            up = [0,1,0];
             break;
             // Front-side view
         case 'f':
         case 'F':
-            eye = [0, 0, 0.1]; 
+            eye = [0, 0, 0.1];
+            up = [0, 1, 0];
             break;
-            // rotating clockwise by 10 degrees
+            // rotating clockwise by 5 degrees
         case 'd':
         case 'D':
-            rotateCamera(10); 
+            rotateCamera(5); 
             break;
-            // counter-clockwise by 10 degrees
+            // counter-clockwise by -5 degrees
         case 'a':
         case 'A':
-            rotateCamera(-10); 
+            rotateCamera(-5); 
             break;
     }
 
@@ -123,23 +126,39 @@ function handleKeyDown(event) {
 }
 
 function rotateCamera(theta) {
-    // here we converted theta to radians
     let radians = theta * Math.PI / 180;
-  
-    //  a rotation matrix
-    let rotationMatrix = mat3(
-      Math.cos(radians), -Math.sin(radians), 0,
-      Math.sin(radians), Math.cos(radians), 0,
-      0, 0, 1
-    );
-  
-    // rotating up vector
+    
+    let rotationMatrix;
+    
+    if (eye[1] === 1) {
+      rotationMatrix = mat3(
+        Math.cos(radians), 0, Math.sin(radians),
+        0, 1, 0,
+        -Math.sin(radians), 0, Math.cos(radians)
+      );
+    } else if (eye[0] === -1) {
+      rotationMatrix = mat3(
+        1, 0, 0,
+        0, Math.cos(-radians), -Math.sin(-radians),
+        0, Math.sin(-radians), Math.cos(-radians)
+      );
+    } else {
+      rotationMatrix = mat3(
+        Math.cos(radians), -Math.sin(radians), 0,
+        Math.sin(radians), Math.cos(radians), 0,
+        0, 0, 1
+      );
+    }
+    
     up = vec3(
       rotationMatrix[0][0] * up[0] + rotationMatrix[0][1] * up[1] + rotationMatrix[0][2] * up[2],
       rotationMatrix[1][0] * up[0] + rotationMatrix[1][1] * up[1] + rotationMatrix[1][2] * up[2],
       rotationMatrix[2][0] * up[0] + rotationMatrix[2][1] * up[1] + rotationMatrix[2][2] * up[2]
     );
   }
+
+  
+
 
 function render() { 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -150,5 +169,5 @@ function render() {
 
     gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_BYTE, 0);
 
-    // requestAnimationFrame(render);
+     requestAnimationFrame(render);
 }
