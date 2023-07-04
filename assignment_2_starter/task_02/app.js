@@ -1,10 +1,12 @@
 let gl, program;
 let vertexCount = 36;
-let modelViewMatrix, projectionMatrix;
+let modelViewMatrix;
+let projectionMatrix;
 let eye = [0, 0, 0.1];
 let at = [0, 0, 0];
 let up = [0, 1, 0];
 let left = -2, right = 2, bottom = -2, ytop = 2, near = -10, far = 10;
+
 
 onload = () => {
   let canvas = document.getElementById("webgl-canvas");
@@ -90,8 +92,6 @@ onload = () => {
 };
 
 // These keyboard events will trigger the camera
-// ...
-
 function handleKeyDown(event) {
   switch (event.key) {
     // Top-side view
@@ -174,12 +174,6 @@ function rotateCamera(theta) {
   );
 }
 
-
-
-
-// ...
-
-
 // Fitting the viewing frustum to zoom in
 function zoomIn() {
   left += 0.1;
@@ -206,11 +200,8 @@ function render() {
   gl.uniformMatrix4fv(projectionMatrix, false, flatten(proj));
 
   gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_BYTE, 0);
+
+  requestAnimationFrame(render);
 }
 
-function handleKeyPress(event) {
-  // Only handle key presses if the canvas has focus
-  if (document.activeElement.tagName === 'CANVAS') {
-    handleKeyDown(event);
-  }
-}
+
