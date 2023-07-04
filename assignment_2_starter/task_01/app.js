@@ -89,7 +89,7 @@ onload = () => {
 
     render();
 };
-//  these keyboard events will trigger the camera
+//  These keyboard events will trigger the camera
 function handleKeyDown(event) {
     switch (event.key) {
         // Top-side view
@@ -124,7 +124,7 @@ function handleKeyDown(event) {
 
     render();
 }
-
+// rotate function
 function rotateCamera(theta) {
     let radians = theta * Math.PI / 180;
     
@@ -157,10 +157,7 @@ function rotateCamera(theta) {
     );
   }
 
-  
-
-
-function render() { 
+  function render() { 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     let mvm = lookAt(eye, at, up);
@@ -171,3 +168,5 @@ function render() {
 
      requestAnimationFrame(render);
 }
+
+
