@@ -8,10 +8,10 @@
     varying vec4 fColor;
 
     uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
+    
 
     void main(void) {
-      gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+      gl_Position =  modelViewMatrix * vPosition;
       fColor = vColor;
     }
   </script>
@@ -33,11 +33,7 @@
 <body>
   <canvas id="webgl-canvas" width="400" height="300"></canvas>
 
-  <script>
-    let canvas = document.getElementById("webgl-canvas");
-
-    canvas.addEventListener('keydown', handleKeyDown);
-  </script>
 </body>
 
 </html>
+
