@@ -1,24 +1,26 @@
 let gl, program;
 let vertexCount = 36;
-let modelViewMatrix, projectionMatrix;
+let modelViewMatrix;
+let projectionMatrix;
 let eye = [0, 0, 0.1];
 let at = [0, 0, 0];
 let up = [0, 1, 0];
-let fovy = 60; // Field of view in degrees
-let aspect = 1; // Aspect ratio of the canvas
-let near = 0.1; // Near clipping plane
-let far = 10.0; // Far clipping plane
+let left = -2, right = 2, bottom = -2, ytop = 2, near = -10, far = 10;
+let fovy=45;
+
+
+let isOrthographic = false; // Flag for orthographic projection
 
 onload = () => {
   let canvas = document.getElementById("webgl-canvas");
 
   gl = WebGLUtils.setupWebGL(canvas);
   if (!gl) {
-    alert('No webgl for you');
+    alert("No webgl for you");
     return;
   }
 
-  program = initShaders(gl, 'vertex-shader', 'fragment-shader');
+  program = initShaders(gl, "vertex-shader", "fragment-shader");
   gl.useProgram(program);
 
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -27,16 +29,6 @@ onload = () => {
 
   gl.clearColor(0, 0, 0, 0.5);
 
-  let vertices = [
-    -1, -1, 1,
-    -1, 1, 1,
-    1, 1, 1,
-    1, -1, 1,
-    -1, -1, -1,
-    -1, 1, -1,
-    1, 1, -1,
-    1, -1, -1,
-  ];
 
   let indices = [
     0, 3, 1,
@@ -64,37 +56,12 @@ onload = () => {
     1, 1, 1,
   ];
 
-  vertices = scale(0.5, vertices);
-
-  generateCube(vertices, indices, colors);
-
-  let vertices2 = [
-    3, -1, -1,
-    3, 1, -1,
-    5, 1, -1,
-    5, -1, -1,
-    3, -1, -3,
-    3, 1, -3,
-    5, 1, -3,
-    5, -1, -3,
-  ];
-
-  generateCube(vertices2, indices, colors);
-
-  modelViewMatrix = gl.getUniformLocation(program, 'modelViewMatrix');
-  projectionMatrix = gl.getUniformLocation(program, 'projectionMatrix');
-
-  document.addEventListener('keydown', handleKeyDown);
-
-  render();
-};
-
-function generateCube(vertices, indices, colors) {
+  
   let vBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-  let vPosition = gl.getAttribLocation(program, 'vPosition');
+  let vPosition = gl.getAttribLocation(program, "vPosition");
   gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(vPosition);
 
@@ -106,75 +73,133 @@ function generateCube(vertices, indices, colors) {
   gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 
-  let vColor = gl.getAttribLocation(program, 'vColor');
+  let vColor = gl.getAttribLocation(program, "vColor");
   gl.vertexAttribPointer(vColor, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(vColor);
-}
-//  these keyboard events will trigger the camera
-function handleKeyDown(event) {
-  switch (event.key) {
-    // Top-side view
-    case 't':
-    case 'T':
-      eye = [0, 1, 0.1]; 
-      break;
-      // Left-side view
-    case 'l':
-    case 'L':
-      eye = [-1, 0, 0.1]; 
-      break;
-      // Front-side view
-    case 'f':
-    case 'F':
-      eye = [0, 0, 0.1]; 
-      break;
-      // rotating clockwise by 10 degrees
-    case 'd':
-    case 'D':
-      rotateCamera(10); 
-      break;
-      // rotating counter-clockwise by -10 degrees
-    case 'a':
-    case 'A':
-      rotateCamera(-10); 
-      break;
-      // zoom in
-    case 'w':
-    case 'W':
-      zoomIn();
-      break;
-      // zoom out
-    case 's':
-    case 'S':
-      zoomOut();
-      break;
-      // orthographic view
-    case 'o':
-    case 'O':
-      setOrthographicView();
-      break;
-      // perspective view
-    case 'p':
-    case 'P':
-      setPerspectiveView();
-      break;
-  }
+
+  modelViewMatrix = gl.getUniformLocation(program, "modelViewMatrix");
+
+  // Add event listeners for keyboard events
+  document.addEventListener("keydown", handleKeyDown);
 
   render();
+};
+
+let vertices = [
+  -1, -1, 1,
+  -1, 1, 1,
+  1, 1, 1,
+  1, -1, 1,
+  -1, -1, -1,
+  -1, 1, -1,
+  1, 1, -1,
+  1, -1, -1,
+];
+
+let vertices2 = [
+  3, -1, -1,
+  3, 1, -1,
+  5, 1, -1,
+  5, -1, -1,
+  3, -1, -3,
+  3, 1, -3,
+  5, 1, -3,
+  5, -1, -3,
+];
+function createCube(vertices) {
+  let vBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+  let vPosition = gl.getAttribLocation(program, "vPosition");
+  gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(vPosition);
+
+  gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_BYTE, 0);
+}
+// These keyboard events will trigger the camera
+function handleKeyDown(event) { 
+  switch (event.key) {
+    case "i":
+    case "I":
+      eye = [2, 2, 2];
+      up = [0, 1, 0];
+      break;
+    case 'd':
+    case 'D':
+      rotateCamera(10);
+      break;
+    // Counter-clockwise rotation by -10 degrees
+    case 'a':
+    case 'A':
+      rotateCamera(-10);
+      break;
+      case "w":
+      case "W":
+      // Zoom in camera
+      zoomInCamera();
+      break;
+    case "s":
+    case "S":
+      zoomOutCamera();
+     break;
+    case "o":
+    case "O":
+      isOrthographic = true;
+      break;
+    case "p":
+    case "P":
+      isOrthographic = false;
+      break;
+  }
+}
+// Zoom in camera function
+function zoomInCamera() {
+  if (isOrthographic) {
+    left += 1.0;
+    right -= 1.0;
+    bottom += 1.0;
+    ytop -= 1.0;
+  } else {
+    eye[2] -= 0.1;
+  }
+}
+// zoom out  camera function
+function zoomOutCamera() {
+  if (isOrthographic) {
+    left -= 1.0;
+    right += 1.0;
+    bottom -= 1.0;
+    ytop += 1.0;
+  } else {
+    eye[2] += 0.1;
+  }
 }
 
 function rotateCamera(theta) {
-  // here we converted theta to radians
   let radians = theta * Math.PI / 180;
+  let rotationMatrix;
 
-  //  a rotation matrix
-  let rotationMatrix = mat3(
-    Math.cos(radians), -Math.sin(radians), 0,
-    Math.sin(radians), Math.cos(radians), 0,
-    0, 0, 1
-  );
+  if (eye[0] === 0 && eye[1] === 0 && eye[2] === 0.1) {  
+    rotationMatrix = mat3(
+      Math.cos(radians), -Math.sin(radians), 0,
+      Math.sin(radians), Math.cos(radians), 0,
+      0, 0, 1
+    );
+  } else if (eye[0] === -1 && eye[1] === 0 && eye[2] === 0) {  
+    rotationMatrix = mat3(
+      Math.cos(radians), 0, Math.sin(radians),
+      0, 1, 0,
+      -Math.sin(radians), 0, Math.cos(radians)
+    );
+  } else {
+    rotationMatrix = mat3(
+      Math.cos(radians), -Math.sin(radians), 0,
+      Math.sin(radians), Math.cos(radians), 0,
+      0, 0, 1
+    );
+  }
 
-  // rotating up vector
   up = vec3(
     rotationMatrix[0][0] * up[0] + rotationMatrix[0][1] * up[1] + rotationMatrix[0][2] * up[2],
     rotationMatrix[1][0] * up[0] + rotationMatrix[1][1] * up[1] + rotationMatrix[1][2] * up[2],
@@ -182,39 +207,31 @@ function rotateCamera(theta) {
   );
 }
 
-function zoomIn() {
-  fovy -= 5; // Decrease the field of view
-  if (fovy < 1) fovy = 1; // Limit the minimum field of view
-}
-
-function zoomOut() {
-  fovy += 5; // Increase the field of view
-  if (fovy > 179) fovy = 179; // Limit the maximum field of view
-}
-function setOrthographicView() {
-    let canvas = document.getElementById("webgl-canvas");
-    aspect = canvas.width / canvas.height;
-    projectionMatrix = ortho(-2 * aspect, 2 * aspect, -2, 2, -10, 10);
-    gl.uniformMatrix4fv(projectionMatrix, false, flatten(projectionMatrix));
-  }
-  
-  function setPerspectiveView() {
-    let canvas = document.getElementById("webgl-canvas");
-    aspect = canvas.width / canvas.height;
-    projectionMatrix = perspective(fovy, aspect, near, far);
-    gl.uniformMatrix4fv(projectionMatrix, false, flatten(projectionMatrix));
-  }
-  
-
 function render() {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  
+  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+  if (isOrthographic) {
+    let projectionMatrix = ortho(left, right, bottom, ytop, near, far);
     let mvm = lookAt(eye, at, up);
-    gl.uniformMatrix4fv(modelViewMatrix, false, flatten(mvm));
-  
-    let proj = perspective(fovy, aspect, near, far);
-    gl.uniformMatrix4fv(projectionMatrix, false, flatten(proj));
-  
-    gl.drawElements(gl.TRIANGLES, vertexCount, gl.UNSIGNED_BYTE, 0);
+    let MofP= mult(projectionMatrix, mvm);
+    gl.uniformMatrix4fv(modelViewMatrix, false, flatten(MofP));
+    createCube(vertices);
+    createCube(vertices2); 
+  } 
+else {
+    let projectionMatrix = perspective(fovy, gl.canvas.width / gl.canvas.height, near, far);
+    let mvm = lookAt(eye, at, up);
+    MofP = mult(projectionMatrix, mvm);
+    gl.uniformMatrix4fv(modelViewMatrix, false, flatten(MofP));
+    createCube(vertices);
+    createCube(vertices2); 
   }
-  
+
+  requestAnimationFrame(render);
+}
+
+
+
+
+
+
